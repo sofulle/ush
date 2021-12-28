@@ -1,0 +1,13 @@
+Мой гитигнор:
+*
+!src
+!src/*.c
+!inc
+!inc/*.h
+!libmx
+!libmx/inc
+!libmx/inc/*.h
+!libmx/src
+!libmx/src/*.c
+!.gitignore
+!Makefile

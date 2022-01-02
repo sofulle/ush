@@ -26,7 +26,7 @@ UNSET 	= \033[0m
 PRMPT = [$(UNDER)$(VIOLET)main$(UNSET)]
 
 
-all: $(EXEC_FILE) #uniqueness
+all: $(EXEC_FILE) tests uniqueness  copy
 
 
 $(EXEC_FILE):
@@ -45,4 +45,11 @@ uniqueness:
 	@printf "$(PRMPT) Starting uniqueness check for $(UNDER)$(EXEC_FILE)$(UNSET)...\n"
 	@./check.sh $(EXEC_FILE) $(EXEC_DIR) $(CHECK_DIR)
 
-.PHONY: all tests uniqueness
+
+copy:
+	@printf "${PRMPT} Copying executable file to /usr/bin\t"
+	@sudo cp $(EXEC_DIR)/$(EXEC_FILE) /usr/bin
+	@printf "${GREEN}copied${UNSET}\n"
+
+
+.PHONY: all tests uniqueness copy

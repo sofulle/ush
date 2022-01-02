@@ -1,0 +1,4 @@
+GLOB="Global"
+export GLOB
+env
+exit

@@ -15,6 +15,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
+#include <dirent.h>
+#include <limits.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <pwd.h>
+#include <sys/errno.h>
 
 // Include local headers
 #include "libmx.h"

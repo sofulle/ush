@@ -1,3 +1,4 @@
+# /bin/zsh
 # tests.sh
 
 EXEC_FILE=$1
@@ -28,14 +29,14 @@ do
 done
 
 
-printf "${PRMPT} Deleting old user output files\t"
+printf "${PRMPT} Deleting old user output files\t\t"
 for test in ${TEST_DIR}/output/user/*
 do
     rm -rf ${test}
 done
 printf "${RED}deleted${UNSET}\n"
 
-printf "${PRMPT} Deleting old test output files\t"
+printf "${PRMPT} Deleting old test output files\t\t"
 for test in ${TEST_DIR}/output/test/*
 do
     rm -rf ${test}
@@ -44,19 +45,19 @@ printf "${RED}deleted${UNSET}\n"
 
 
 id=0
-printf "${PRMPT} Creating new user output files\t\t"
+printf "${PRMPT} Creating user output files\t\t"
 for test in ${TEST_DIR}/cases/*
 do
-    ${EXEC_DIR}/${EXEC_FILE} $(cat ${test}) > ${TEST_DIR}/output/user/test${id}
+    ${EXEC_DIR}/${EXEC_FILE} < $test > ${TEST_DIR}/output/user/test${id} 2> /dev/null
     id=$(($id+1))
 done
 printf "${GREEN}created${UNSET}\n"
 
 id=0
-printf "${PRMPT} Creating new test output files\t\t"
+printf "${PRMPT} Creating test output files\t\t"
 for test in ${TEST_DIR}/cases/*
 do
-    ls $(cat ${test}) &> ${TEST_DIR}/output/test/test${id}
+    zsh < $test > ${TEST_DIR}/output/test/test${id} 2> /dev/null
     id=$(($id+1))
 done
 printf "${GREEN}created${UNSET}\n"

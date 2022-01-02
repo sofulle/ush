@@ -1,0 +1,2 @@
+PROM="uh>"
+echo "My prompt is ${PROM}"; exit

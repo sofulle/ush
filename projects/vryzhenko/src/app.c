@@ -5,7 +5,8 @@
 app_t *app_init() {
     app_t *app = malloc(sizeof(app_t));
 
-    
+    app->is_running = true;
+    app->vars = NULL;
 
     return app;
 }

@@ -25,5 +25,4 @@
 #include "functions.h"
 #include "debug.h"
 
-
 #endif // !USH_H

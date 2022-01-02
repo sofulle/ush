@@ -1,11 +1,11 @@
 # Makefile
 
-EXEC_DIR = projects/vryzhenko
+EXEC_DIR = project
 EXEC_FILE = ush
 
 TESTS_DIR = tests
 
-CHECK_DIR = projects/another00
+CHECK_DIR = project
 
 
 BLACK	= \033[30;1m
@@ -26,7 +26,7 @@ UNSET 	= \033[0m
 PRMPT = [$(UNDER)$(VIOLET)main$(UNSET)]
 
 
-all: $(EXEC_FILE) tests uniqueness  copy
+all: $(EXEC_FILE) tests copy
 
 
 $(EXEC_FILE):

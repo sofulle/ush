@@ -7,6 +7,8 @@ app_t *app_init() {
 
     app->is_running = true;
     app->vars = NULL;
+    app->processes = NULL;
+    app->commands = NULL;
 
     return app;
 }

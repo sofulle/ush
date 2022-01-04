@@ -17,16 +17,12 @@ int main(int argc, char **argv) {
 
     var_set(app, "PROMPT", "u$h> ");
 
-    var_set(app, "key", "blue red rabbit");
-    var_set(app, "x", "0");
-    var_set(app, "y", "1");
-
     command_add(app, "exit", exec_exit);
     command_add(app, "echo", exec_echo);
+    command_add(app, "export", exec_export);
+    command_add(app, "unset", exec_unset);
     command_add(app, "jobs", exec_jobs);
     command_add(app, "fg", exec_fg);
-    
-    // ? env: HOME, PWD, OLDPWD
 
     while(app->is_running) {
         char *line = NULL;

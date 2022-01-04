@@ -22,6 +22,7 @@ void command_add(app_t *app, char *name, int (*func)(app_t *, char **));
 
 // var
 void var_set(app_t *app, char *name, char *value);
+void var_unset(app_t *app, char *name);
 char *var_get(app_t *app, char *name);
 var_t *var_search(app_t *app, char *name);
 
@@ -29,12 +30,16 @@ var_t *var_search(app_t *app, char *name);
 int exec_exit(app_t *app, char **args);
 int exec_echo(app_t *app, char **args);
 int exec_setvar(app_t *app, char **args);
+int exec_export(app_t *app, char **args);
 int exec_jobs(app_t *app, char **args);
 int exec_fg(app_t *app, char **args);
+int exec_unset(app_t *app, char **args);
+
 
 // utils
 void prompt_print(app_t *app);
 int get_args_count(char *str);
 int get_char_count(char *str, char c);
+bool is_valid_str(char *str);
 
 #endif // !USH_FUNCTIONS_H

@@ -3,6 +3,6 @@
 #include "libmx.h"
 
 void mx_strdel(char **str) {
-    free(*str);
+    if(*str != NULL) free(*str);
     *str = NULL;
 }

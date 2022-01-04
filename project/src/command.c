@@ -28,7 +28,7 @@ int command_handle(app_t *app, char **command, bool primary) {
 
     command_run(app, name, args);
 
-    //mx_del_strarr(&args);
+    mx_del_strarr(&args);
 
     if(primary) return 0;
     return 0;
@@ -41,19 +41,23 @@ int command_replace_vars(app_t *app, char **command) {
     int vars_len = 0;
     int tokens_len = 0;
     int new_len = 0;
+    bool is_minimized = false;
     char *new_command = NULL;
+    bool no_one_var = true;
 
     for (int i = 0; i < len; i++) {
         int token_start = -1;
         int token_length = -1;
         char *token_value = NULL;
 
-        if(i + 1 < len)
+        if(i + 1 < len) {
             if(str[i] == '$' && str[i + 1] == '{') {
                 if(i - 1 >= 0)
                     if(str[i - 1] == '\\') continue;
 
                 token_start = i;
+                is_minimized = false;
+                no_one_var = false;
 
                 for (int j = i + 2; j < len; j++) {
                     if(str[j] == '}') {
@@ -75,12 +79,41 @@ int command_replace_vars(app_t *app, char **command) {
                     token_value[j] = str[token_start + j + 2];
                 }
             }
+            else if(str[i] == '$' && (mx_isalpha(str[i + 1]) || mx_isdigit(str[i + 1]))) {
+                if(i - 1 >= 0)
+                    if(str[i - 1] == '\\') continue;
+
+                token_start = i;
+                is_minimized = true;
+                no_one_var = false;
+
+                for (int j = i + 1; j < len; j++) {
+                    if(!(mx_isalpha(str[j]) || mx_isdigit(str[j]))) {
+                        token_length = j - token_start - 1;
+                        i = j;
+                        break;
+                    }
+                }
+
+                if(token_length == -1) {
+                    token_length = len - token_start - 1;
+                }
+
+                token_value = (char *) malloc(token_length * sizeof(char) + 1);
+                token_value[token_length] = '\0';
+
+                for (int j = 0; j < token_length; j++) {
+                    token_value[j] = str[token_start + j + 1];
+                }
+            }
+        }
 
         if(token_start != -1) {
             token_t *token = (token_t *) malloc(sizeof(token_t));
             token->start = token_start;
             token->length = token_length;
             token->value = token_value;
+            token->is_minimized = is_minimized;
 
             if(tokens == NULL) {
                 tokens = mx_create_node(token);
@@ -91,14 +124,23 @@ int command_replace_vars(app_t *app, char **command) {
         }
     }
 
+    if(no_one_var) return 0;
+
     for(t_list *node = tokens; node != NULL; node = node->next) {
         token_t *token = (token_t *)node->data;
-        tokens_len = tokens_len + token->length + 3;
+        if (token->is_minimized)
+            tokens_len = tokens_len + token->length + 1;
+        else
+            tokens_len = tokens_len + token->length + 3;
+
         //printf("start: %d\tlength: %d\tname: %s\tvalue: %s\n", token->start, token->length, token->value, var_get(app, token->value));
     }
+    //printf("full length: %d\n", tokens_len);
+
     for(t_list *node = tokens; node != NULL; node = node->next) {
         token_t *token = (token_t *)node->data;
-        char *value = var_get(app, token->value);
+        char *value = getenv(token->value);
+        if(value == NULL) value = var_get(app, token->value);
         if(value == NULL) value = "";
         vars_len += strlen(value);
     }
@@ -111,7 +153,8 @@ int command_replace_vars(app_t *app, char **command) {
     int last_pos = 0, last_pos_new = 0;
     for(t_list *node = tokens; node != NULL; node = node->next) {
         token_t *token = (token_t *)node->data;
-        char *value = var_get(app, token->value);
+        char *value = getenv(token->value);
+        if(value == NULL) value = var_get(app, token->value);
         if(value == NULL) value = "";
         
         for (int i = last_pos; i < token->start; i++, last_pos_new++) {
@@ -122,7 +165,10 @@ int command_replace_vars(app_t *app, char **command) {
             new_command[last_pos_new] = value[i];
         }
 
-        last_pos = token->start + token->length + 3;
+        if (token->is_minimized)
+            last_pos = token->start + token->length + 1;
+        else
+            last_pos = token->start + token->length + 3;
     }
     for (int i = last_pos; i < len; i++, last_pos_new++) {
         new_command[last_pos_new] = str[i];
@@ -149,17 +195,11 @@ int command_split_args(app_t *app, char *command, char **name, char ***args) {
 int command_run(app_t *app, char *name, char **args) {
     for(t_list *node = app->commands; node != NULL; node = node->next) {
         command_t *command = (command_t *)node->data;
-
         if(!strcmp(name, command->name)) return command->func(app, args);
     }
     if(mx_get_char_index(name, '=') >= 0) return exec_setvar(app, args);
 
     return command_launch(app, name, args);
-
-    mx_printerr("ush: command not found: ");
-    mx_printerr(name);
-    mx_printerr("\n");
-    return -1;
 }
 
 int command_launch(app_t *app, char *name, char **args) {

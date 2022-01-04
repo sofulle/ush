@@ -58,3 +58,10 @@ int get_char_count(char *str, char c) {
 
     return count;
 }
+
+bool is_valid_str(char *str) {
+    for (unsigned int i = 0; i < strlen(str); i++) {
+        if(!(mx_isalpha(str[i]) || mx_isdigit(str[i]))) return false;
+    }
+    return true;
+}

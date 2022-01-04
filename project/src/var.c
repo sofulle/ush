@@ -17,8 +17,17 @@ void var_set(app_t *app, char *name, char *value) {
             mx_push_back(&app->vars, var);
     }
     else {
-        free(var->value);
+        if(var->value != NULL) free(var->value);
         var->value = strdup(value);
+    }
+}
+
+void var_unset(app_t *app, char *name) {
+    var_t *var = var_search(app, name);
+
+    if(var != NULL) {
+        if(var->value != NULL) free(var->value);
+        var->value = NULL;
     }
 }
 

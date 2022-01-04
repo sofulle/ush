@@ -11,6 +11,7 @@ typedef struct token_s {
     int start;
     int length;
     char *value;
+    bool is_minimized;
 } token_t;
 
 typedef struct process_s {

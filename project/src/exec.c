@@ -29,17 +29,113 @@ int exec_echo(app_t *app, char **args) {
 int exec_setvar(app_t *app, char **args) {
     char **splited = NULL;
     int count = 0;
+    int splited_count = 0;
 
     for(; args[count] != NULL; count++);
 
     if (count > 1) {
+        mx_printerr("ush: too many options\n");
         return -1;
     }
     
     splited = mx_strsplit(args[0], '=');
-    var_set(app, splited[0], splited[1]);
+    if (splited == NULL) {
+        mx_printerr("ush: split wrong\n");
+        return -1;
+    }
 
-    //mx_del_strarr(&splited);
+    for(; splited[splited_count] != NULL; splited_count++);
+    if (splited_count > 2 || splited_count < 1) {
+        mx_printerr("ush: bad options\n");
+        return -1;
+    }
+
+    if(!is_valid_str(splited[0])) {
+        mx_printerr("ush: bad option: ");
+        mx_printerr(splited[0]);
+        mx_printerr("\n");
+        return -1;
+    }
+
+
+    if (splited_count == 1) {
+        if(getenv(splited[0]) != NULL) {
+            if(setenv(splited[0], "", true) == -1) {
+                mx_printerr("setenv: not enough memory\n");
+                return -1;
+            }
+        }
+        else
+            var_set(app, splited[0], "");
+    }
+    else {
+        if(getenv(splited[0]) != NULL) {
+            if(setenv(splited[0], splited[1], true) == -1) {
+                mx_printerr("setenv: not enough memory\n");
+                return -1;
+            }
+        }
+        else
+            var_set(app, splited[0], splited[1]);
+    }
+
+    mx_del_strarr(&splited);
+    return 0;
+}
+
+int exec_export(app_t *app, char **args) {
+    int count = 0;
+
+    for(; args[count] != NULL; count++);
+    if (count < 2) {
+        mx_printerr("ush: bad options\n");
+        return -1;
+    }
+
+    for (int i = 1; i < count; i++) {
+        if(!is_valid_str(args[i])) {
+            mx_printerr("ush: bad option: ");
+            mx_printerr(args[i]);
+            mx_printerr("\n");
+            return -1;
+        }
+
+        if(getenv(args[i]) != NULL) continue;
+
+        if(var_get(app, args[i]) == NULL) continue;
+
+        setenv(args[i], var_get(app, args[i]), true);
+    }
+
+    return 0;
+}
+
+int exec_unset(app_t *app, char **args) {
+    int count = 0;
+
+    for(; args[count] != NULL; count++);
+    if (count < 2) {
+        mx_printerr("ush: bad options\n");
+        return -1;
+    }
+
+    for (int i = 1; i < count; i++) {
+        if(!is_valid_str(args[i])) {
+            mx_printerr("ush: bad option: ");
+            mx_printerr(args[i]);
+            mx_printerr("\n");
+            return -1;
+        }
+
+        if(var_get(app, args[i]) != NULL) {
+            var_unset(app, args[i]);
+        }
+
+        if(getenv(args[i]) != NULL) {
+            unsetenv(args[i]);
+        }
+    }
+    
     return 0;
 }
 

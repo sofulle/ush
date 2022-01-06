@@ -7,15 +7,19 @@ int main(int argc, char **argv) {
 
     signal(SIGINT, SIG_IGN);
     signal(SIGTSTP, SIG_IGN);
+    signal(SIGCONT, SIG_DFL);
 
+    // ! debug
     if(argc > 1) {
-        if(strcmp(argv[1], "stp") == 0) {
+        if(strcmp(argv[1], "1") == 0) {
             signal(SIGINT, SIG_DFL);
             signal(SIGTSTP, SIG_DFL);
         }
+        var_set(app, "PROMPT", argv[2]);
     }
-
-    var_set(app, "PROMPT", "u$h> ");
+    else {
+        var_set(app, "PROMPT", "u$h> ");
+    }
 
     command_add(app, "exit", exec_exit);
     command_add(app, "echo", exec_echo);
@@ -23,6 +27,7 @@ int main(int argc, char **argv) {
     command_add(app, "unset", exec_unset);
     command_add(app, "jobs", exec_jobs);
     command_add(app, "fg", exec_fg);
+    command_add(app, "v", exec_vector);
 
     while(app->is_running) {
         char *line = NULL;

@@ -15,17 +15,17 @@ typedef struct token_s {
 } token_t;
 
 typedef struct process_s {
-    int id;
     pid_t pid;
     char *name;
     int status;
+    bool is_last;
 } process_t;
 
 typedef struct app_s {
     bool is_running;
     t_list *vars;
     t_list *commands;
-    t_list *processes;
+    vector_t *processes;
 } app_t;
 
 typedef struct command_s {

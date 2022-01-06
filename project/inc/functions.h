@@ -19,6 +19,7 @@ int command_split_args(app_t *app, char *command, char **name, char ***args);
 int command_run(app_t *app, char *name, char **args);
 int command_launch(app_t *app, char *name, char **args);
 void command_add(app_t *app, char *name, int (*func)(app_t *, char **));
+int command_wait(app_t *app, process_t *process, uint32_t id);
 
 // var
 void var_set(app_t *app, char *name, char *value);
@@ -35,6 +36,7 @@ int exec_jobs(app_t *app, char **args);
 int exec_fg(app_t *app, char **args);
 int exec_unset(app_t *app, char **args);
 
+int exec_vector(app_t *app, char **args);
 
 // utils
 void prompt_print(app_t *app);

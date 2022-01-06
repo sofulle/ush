@@ -141,22 +141,49 @@ int exec_unset(app_t *app, char **args) {
 
 int exec_jobs(app_t *app, char **args) {
     args = NULL;
+    int id = 0;
 
-    for(t_list *node = app->processes; node != NULL; node = node->next) {
+    for(vector_t *node = app->processes; node != NULL; node = node->next, id++) {
         process_t *process = (process_t *)node->data;
 
-        printf("[%d]  + suspended  %s\n", process->id, process->name);
+        printf("[%d]  ", id + 1);
+        if(process->is_last) printf("+");
+        else printf(" ");
+        printf(" suspended  %s\n", process->name);
     }
 
     return 0;
 }
 
 int exec_fg(app_t *app, char **args) {
-    args = NULL;
     process_t *process = NULL;
+    int id = 0;
     int status = 0;
+    int args_count = 0;
 
-    for(t_list *node = app->processes; node != NULL; node = node->next) {
+    for(; args[args_count] != NULL; args_count++);
+    if (args_count > 2 || args_count < 1) {
+        mx_printerr("ush: too many options\n");
+        return -1;
+    }
+
+    if (args_count == 1) {
+        for(vector_t *node = app->processes; node != NULL; node = node->next, id++) {
+            process_t *p = (process_t *)node->data;
+            if(p->is_last) {
+                process = p;
+            }
+        }
+    }
+    else {
+        id = atoi(args[1]) - 1;
+        vector_t *node = vector_get(&app->processes, id);
+        if(node == NULL) {
+            mx_printerr("fg: job not found: ");
+            mx_printerr(args[1]);
+            mx_printerr("\n");
+            return -1;
+        }
         process = (process_t *)node->data;
     }
 
@@ -165,38 +192,68 @@ int exec_fg(app_t *app, char **args) {
         return -1;
     }
 
-    kill(process->pid, SIGCONT);
+    printf("{%d}\n", kill(process->pid, SIGCONT));
     waitpid(process->pid, &status, WUNTRACED);
 
     if (WIFSTOPPED(status)) {
-        printf("\n[%d]  + %d suspended  %s\n", process->id, process->pid, process->name);
+        printf("\n[%d]  + %d suspended  %s\n", id + 1, process->pid, process->name);
     }
     else {
-        int count = mx_list_size(app->processes);
-        int i = 0;
+        vector_delete(&app->processes, id);
 
-        if(count == 1) {
-            process = (process_t *)app->processes->data;
-            free(process->name);
-            free(app->processes->data);
-            free(app->processes);
-            app->processes = NULL;
-        }
-        else if(count > 1) {
-            for(t_list *node = app->processes; node != NULL; node = node->next) {
-                if(count - i == 2) {
-                    process = (process_t *)node->next->data;
-                    free(process->name);
-                    free(node->next->data);
-                    free(node->next);
-                    node->next = NULL;
-                }
-
-                i++;
+        bool is_last = false;
+        for(vector_t *node = app->processes; node != NULL; node = node->next) {
+            process_t *p = (process_t *)node->data;
+            if(p->is_last) {
+                is_last = true;
+                break;
             }
         }
-        process->status = 1;
+        if(!is_last) ((process_t *)app->processes->tail->data)->is_last = true;
     }
 
     return status;
+}
+
+int exec_vector(app_t *app, char **args) {
+    app->is_running = app->is_running;
+    args = NULL;
+    vector_t *v = vector_init(strdup("process 1"));
+
+    vector_push_back(&v, strdup("process 2"));
+    vector_push_back(&v, strdup("process 3"));
+    vector_push_back(&v, strdup("process 4"));
+
+    printf("\nINIT\n");
+    for (vector_t *node = v; node != NULL; node = node->next) {
+        printf("%d: [%p]  head: %p  tail: %p  prev: %p  next: %p  data: %s\n", 
+        node->id, (void *)node, (void *)node->head, (void *)node->tail, (void *)node->prev, (void *)node->next, (char *)node->data);
+    }
+    
+    vector_delete(&v, 0);
+
+    printf("\n1DEL\n");
+    for (vector_t *node = v; node != NULL; node = node->next) {
+        printf("%d: [%p]  head: %p  tail: %p  prev: %p  next: %p  data: %s\n", 
+        node->id, (void *)node, (void *)node->head, (void *)node->tail, (void *)node->prev, (void *)node->next, (char *)node->data);
+    }
+
+    vector_delete(&v, 2);
+    vector_delete(&v, 1);
+
+    printf("\n2DEL\n");
+    for (vector_t *node = v; node != NULL; node = node->next) {
+        printf("%d: [%p]  head: %p  tail: %p  prev: %p  next: %p  data: %s\n", 
+        node->id, (void *)node, (void *)node->head, (void *)node->tail, (void *)node->prev, (void *)node->next, (char *)node->data);
+    }
+
+    vector_delete(&v, 0);
+
+    printf("\nLAST\n");
+    for (vector_t *node = v; node != NULL; node = node->next) {
+        printf("%d: [%p]  head: %p  tail: %p  prev: %p  next: %p  data: %s\n", 
+        node->id, (void *)node, (void *)node->head, (void *)node->tail, (void *)node->prev, (void *)node->next, (char *)node->data);
+    }
+
+    return 0;
 }

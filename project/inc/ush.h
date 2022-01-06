@@ -24,6 +24,7 @@
 #include <sys/errno.h>
 
 // Include local headers
+#include "vector.h"
 #include "libmx.h"
 #include "definitions.h"
 #include "enums.h"

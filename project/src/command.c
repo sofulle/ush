@@ -204,13 +204,15 @@ int command_run(app_t *app, char *name, char **args) {
 
 int command_launch(app_t *app, char *name, char **args) {
     pid_t pid = 0;
-    int status = 0;
+    int status = -1;
 
     pid = fork();
     if (pid == 0) {
         int exec_status = 0;
 
+        signal(SIGINT, SIG_DFL);
         signal(SIGTSTP, SIG_DFL);
+
         exec_status = execvp(name, args);
 
         if (exec_status == -1) {
@@ -229,17 +231,22 @@ int command_launch(app_t *app, char *name, char **args) {
 
         if (WIFSTOPPED(status)) {
             process_t *process = (process_t *) malloc(sizeof(process_t));
-            process->id = mx_list_size(app->processes) + 1;
             process->pid = pid;
             process->name = mx_strdup(name);
             process->status = -2;
+            process->is_last = true;
+
+            for (vector_t *node = app->processes; node != NULL; node = node->next) {
+                process_t *p = (process_t *)node->data;
+                p->is_last = false;
+            }
 
             if(app->processes == NULL)
-                app->processes = mx_create_node(process);
+                app->processes = vector_init(process);
             else
-                mx_push_back(&app->processes, process);
+                vector_push_back(&app->processes, process);
 
-            printf("\n[%d]  + %d suspended  %s\n", process->id, process->pid, process->name);
+            printf("\n[%d]  + %d suspended  %s\n", vector_size(&app->processes), process->pid, process->name);
         }
     }
 

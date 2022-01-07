@@ -30,34 +30,28 @@ done
 
 
 printf "${PRMPT} Deleting old user output files\t\t"
-for test in ${TEST_DIR}/output/user/*
-do
-    rm -rf ${test}
-done
+rm -f ${TEST_DIR}/output/user/*
 printf "${RED}deleted${UNSET}\n"
 
 printf "${PRMPT} Deleting old test output files\t\t"
-for test in ${TEST_DIR}/output/test/*
-do
-    rm -rf ${test}
-done
+rm -f ${TEST_DIR}/output/test/*
 printf "${RED}deleted${UNSET}\n"
 
 
 id=0
 printf "${PRMPT} Creating user output files\t\t"
-for test in ${TEST_DIR}/cases/*
+while [ $id -lt $count ]
 do
-    ${EXEC_DIR}/${EXEC_FILE} < $test > ${TEST_DIR}/output/user/test${id} 2> /dev/null
+    ${EXEC_DIR}/${EXEC_FILE} < ${TEST_DIR}/cases/test${id} 2> ${TEST_DIR}/output/user/test${id} >> ${TEST_DIR}/output/user/test${id}
     id=$(($id+1))
 done
 printf "${GREEN}created${UNSET}\n"
 
 id=0
 printf "${PRMPT} Creating test output files\t\t"
-for test in ${TEST_DIR}/cases/*
+while [ $id -lt $count ]
 do
-    zsh < $test > ${TEST_DIR}/output/test/test${id} 2> /dev/null
+    zsh ${TEST_DIR}/cases/test${id} > ${TEST_DIR}/output/test/test${id}
     id=$(($id+1))
 done
 printf "${GREEN}created${UNSET}\n"
@@ -75,6 +69,9 @@ do
         printf "${GREEN}OK${UNSET}\n"
     else
         printf "${RED}FAILED${UNSET}\n"
+        printf "${OPACITY}"
+        cat -e ${TEST_DIR}/cases/test${id}
+        printf "${UNSET}"
         diff -y ${TEST_DIR}/output/user/test${id} ${TEST_DIR}/output/test/test${id}
     fi
 

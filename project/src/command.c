@@ -24,7 +24,7 @@ int command_handle(app_t *app, char **command, bool primary) {
     char **args = NULL;
 
     if (command_replace_vars(app, command) != 0) return -1;
-    if (command_split_args(app, *command, &name, &args) != 0) return -1;
+    if (command_split_args(*command, &name, &args) != 0) return -1;
 
     command_run(app, name, args);
 
@@ -177,18 +177,27 @@ int command_replace_vars(app_t *app, char **command) {
     free(*command);
     *command = new_command;
 
+    printf("`%s\'\n", new_command);
+
     return 0;
 }
 
-int command_split_args(app_t *app, char *command, char **name, char ***args) {
-    app->is_running = app->is_running;
+int command_split_args(char *command, char **name, char ***args) {
+    int32_t args_count = 0;
+    int32_t *args_lengths = NULL;
 
+    args_count = get_args_count(command);
+    args_lengths = get_args_lengths(command, args_count);
 
-    if(get_args_count(command) < 0) return -1;
+    if(args_count < 0 || args_lengths == NULL) return -1;
 
-    *args = mx_strsplit(command, ' ');
+    *args = get_args(command, args_count, args_lengths);
+    if(clean_args(args, args_count) != 0) return -1;
+
     *name = args[0][0];
 
+
+    free(args_lengths);
     return 0;
 }
 

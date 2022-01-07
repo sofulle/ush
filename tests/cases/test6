@@ -1,0 +1,1 @@
+which -s asdasdasdasdsa; echo $? ; exit

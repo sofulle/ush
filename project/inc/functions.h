@@ -15,7 +15,7 @@ int line_parse(char *line, char ***commands);
 // command
 int command_handle(app_t *app, char **command, bool primary);
 int command_replace_vars(app_t *app, char **command);
-int command_split_args(app_t *app, char *command, char **name, char ***args);
+int command_split_args(char *command, char **name, char ***args);
 int command_run(app_t *app, char *name, char **args);
 int command_launch(app_t *app, char *name, char **args);
 void command_add(app_t *app, char *name, int (*func)(app_t *, char **));
@@ -40,7 +40,11 @@ int exec_vector(app_t *app, char **args);
 
 // utils
 void prompt_print(app_t *app);
-int get_args_count(char *str);
+int32_t get_args_count(char *str);
+int32_t *get_args_lengths(char *str, int32_t count);
+char **get_args(char *str, int32_t count, int32_t *lengths);
+int32_t clean_args(char ***args, int32_t count);
+char *strtrim_quotes(char *str);
 int get_char_count(char *str, char c);
 bool is_valid_str(char *str);
 

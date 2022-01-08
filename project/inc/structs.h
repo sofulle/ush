@@ -26,6 +26,7 @@ typedef struct app_s {
     t_list *vars;
     t_list *commands;
     vector_t *processes;
+    int32_t last_status;
 } app_t;
 
 typedef struct command_s {

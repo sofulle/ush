@@ -10,6 +10,7 @@ app_t *app_init() {
     app->vars = NULL;
     app->processes = NULL;
     app->commands = NULL;
+    app->last_status = 0;
 
     signal(SIGINT, SIG_IGN);
     signal(SIGTSTP, SIG_IGN);
@@ -25,7 +26,8 @@ app_t *app_init() {
     command_add(app, "unset", exec_unset);
     command_add(app, "jobs", exec_jobs);
     command_add(app, "fg", exec_fg);
-    command_add(app, "v", exec_vector);
+    command_add(app, "pwd", exec_pwd);
+    command_add(app, "cd", exec_cd);
 
     return app;
 }

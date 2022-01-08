@@ -15,6 +15,7 @@ int line_parse(char *line, char ***commands);
 // command
 int command_handle(app_t *app, char **command, bool primary);
 int command_replace_vars(app_t *app, char **command);
+int command_replace_tilde(app_t *app, char **command);
 int command_split_args(char *command, char **name, char ***args);
 int command_run(app_t *app, char *name, char **args);
 int command_launch(app_t *app, char *name, char **args);
@@ -35,8 +36,8 @@ int exec_export(app_t *app, char **args);
 int exec_jobs(app_t *app, char **args);
 int exec_fg(app_t *app, char **args);
 int exec_unset(app_t *app, char **args);
-
-int exec_vector(app_t *app, char **args);
+int exec_pwd(app_t *app, char **args);
+int exec_cd(app_t *app, char **args);
 
 // utils
 void prompt_print(app_t *app);
@@ -47,5 +48,6 @@ int32_t clean_args(char ***args, int32_t count);
 char *strtrim_quotes(char *str);
 int get_char_count(char *str, char c);
 bool is_valid_str(char *str);
+char *normalize_path(const char * src);
 
 #endif // !USH_FUNCTIONS_H

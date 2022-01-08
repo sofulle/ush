@@ -24,9 +24,10 @@ int command_handle(app_t *app, char **command, bool primary) {
     char **args = NULL;
 
     if (command_replace_vars(app, command) != 0) return -1;
+    if (command_replace_tilde(app, command) != 0) return -1;
     if (command_split_args(*command, &name, &args) != 0) return -1;
 
-    command_run(app, name, args);
+    app->last_status = command_run(app, name, args);
 
     mx_del_strarr(&args);
 
@@ -72,7 +73,7 @@ int command_replace_vars(app_t *app, char **command) {
                     return -1;
                 }
 
-                token_value = (char *) malloc(token_length * sizeof(char) + 1);
+                token_value = (char *) malloc((token_length + 1) * sizeof(char));
                 token_value[token_length] = '\0';
 
                 for (int j = 0; j < token_length; j++) {
@@ -99,12 +100,23 @@ int command_replace_vars(app_t *app, char **command) {
                     token_length = len - token_start - 1;
                 }
 
-                token_value = (char *) malloc(token_length * sizeof(char) + 1);
+                token_value = (char *) malloc((token_length + 1) * sizeof(char));
                 token_value[token_length] = '\0';
 
                 for (int j = 0; j < token_length; j++) {
                     token_value[j] = str[token_start + j + 1];
                 }
+            }
+            else if(str[i] == '$' && str[i + 1] == '?') {
+                if(i - 1 >= 0)
+                    if(str[i - 1] == '\\') continue;
+
+                token_start = i;
+                is_minimized = true;
+                no_one_var = false;
+
+                token_value = "?";
+                token_length = 1;
             }
         }
 
@@ -133,13 +145,15 @@ int command_replace_vars(app_t *app, char **command) {
         else
             tokens_len = tokens_len + token->length + 3;
 
-        //printf("start: %d\tlength: %d\tname: %s\tvalue: %s\n", token->start, token->length, token->value, var_get(app, token->value));
+        //// printf("start: %d\tlength: %d\tname: %s\tvalue: %s\n", token->start, token->length, token->value, var_get(app, token->value));
     }
-    //printf("full length: %d\n", tokens_len);
+    //// printf("full length: %d\n", tokens_len);
 
     for(t_list *node = tokens; node != NULL; node = node->next) {
         token_t *token = (token_t *)node->data;
-        char *value = getenv(token->value);
+        char *value = NULL;
+        if(strcmp(token->value, "?") == 0) value = mx_itoa(app->last_status);
+        if(value == NULL) value = getenv(token->value);
         if(value == NULL) value = var_get(app, token->value);
         if(value == NULL) value = "";
         vars_len += strlen(value);
@@ -153,7 +167,9 @@ int command_replace_vars(app_t *app, char **command) {
     int last_pos = 0, last_pos_new = 0;
     for(t_list *node = tokens; node != NULL; node = node->next) {
         token_t *token = (token_t *)node->data;
-        char *value = getenv(token->value);
+        char *value = NULL;
+        if(strcmp(token->value, "?") == 0) value = mx_itoa(app->last_status);
+        if(value == NULL) value = getenv(token->value);
         if(value == NULL) value = var_get(app, token->value);
         if(value == NULL) value = "";
         
@@ -177,7 +193,99 @@ int command_replace_vars(app_t *app, char **command) {
     free(*command);
     *command = new_command;
 
-    printf("`%s\'\n", new_command);
+    //// printf("`%s\'\n", new_command);
+
+    return 0;
+}
+
+int command_replace_tilde(app_t *app, char **command) {
+    app = NULL;
+    char *str = *command;
+    int len = strlen(str);
+    t_list *tokens = NULL;
+    int vars_len = 0;
+    int tokens_len = 0;
+    int new_len = 0;
+    char *new_command = NULL;
+    bool no_one_tilde = true;
+
+    for (int i = 0; i < len; i++) {
+        int token_start = -1;
+        int token_length = -1;
+        char *token_value = NULL;
+
+        if(str[i] == '~') {
+            if(i - 1 >= 0)
+                if(str[i - 1] == '\\') continue;
+
+            token_start = i;
+            no_one_tilde = false;
+
+            token_value = "~";
+            token_length = 1;
+        }
+
+        if(token_start != -1) {
+            token_t *token = (token_t *) malloc(sizeof(token_t));
+            token->start = token_start;
+            token->length = token_length;
+            token->value = token_value;
+
+            if(tokens == NULL) {
+                tokens = mx_create_node(token);
+            }
+            else {
+                mx_push_back(&tokens, token);
+            }
+        }
+    }
+
+    if(no_one_tilde) return 0;
+
+    for(t_list *node = tokens; node != NULL; node = node->next) {
+        token_t *token = (token_t *)node->data;
+        tokens_len = tokens_len + token->length;
+
+        //// printf("start: %d\tlength: %d\tname: %s\tvalue: %s\n", token->start, token->length, token->value, var_get(app, token->value));
+    }
+    //// printf("full length: %d\n", tokens_len);
+
+    for(t_list *node = tokens; node != NULL; node = node->next) {
+        token_t *token = (token_t *)node->data;
+        char *value = NULL;
+        if(strcmp(token->value, "~") == 0) value = getenv("HOME");
+        vars_len += strlen(value);
+    }
+
+    new_len = len - tokens_len + vars_len;
+
+    new_command = (char *) malloc((new_len + 1) * sizeof(char));
+    memset(new_command, 0, new_len + 1);
+
+    int last_pos = 0, last_pos_new = 0;
+    for(t_list *node = tokens; node != NULL; node = node->next) {
+        token_t *token = (token_t *)node->data;
+        char *value = NULL;
+        if(strcmp(token->value, "~") == 0) value = getenv("HOME");
+        
+        for (int i = last_pos; i < token->start; i++, last_pos_new++) {
+            new_command[last_pos_new] = str[i];
+        }
+
+        for (unsigned int i = 0; i < strlen(value); i++, last_pos_new++) {
+            new_command[last_pos_new] = value[i];
+        }
+
+        last_pos = token->start + token->length;
+    }
+    for (int i = last_pos; i < len; i++, last_pos_new++) {
+        new_command[last_pos_new] = str[i];
+    }
+
+    free(*command);
+    *command = new_command;
+
+    //// printf("`%s\'\n", new_command);
 
     return 0;
 }
@@ -196,6 +304,9 @@ int command_split_args(char *command, char **name, char ***args) {
 
     *name = args[0][0];
 
+    //// for (int32_t i = 0; args[0][i] != NULL; i++) {
+    ////     printf("[%d] `%s\'\n", i, args[0][i]);
+    //// }
 
     free(args_lengths);
     return 0;

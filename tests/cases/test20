@@ -1,0 +1,1 @@
+export UNIT=location UFK=p2p ucode=cbl ; echo $UNIT $UFK $ucode ; unset UNIT UFK ucode ; echo $UNIT $UFK $ucode ; exit

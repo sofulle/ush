@@ -1,0 +1,1 @@
+export UNIT=location; export UFK=p2p ucode=cbl; echo $UNIT $UFK $ucode; exit

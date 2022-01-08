@@ -26,7 +26,7 @@ UNSET 	= \033[0m
 PRMPT = [$(UNDER)$(VIOLET)main$(UNSET)]
 
 
-all: $(EXEC_FILE) tests copy
+all: $(EXEC_FILE) copy
 
 
 $(EXEC_FILE):

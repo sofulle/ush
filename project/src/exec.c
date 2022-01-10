@@ -43,12 +43,18 @@ int exec_echo(app_t *app, char **args) {
     }
 
     for (int32_t i = keys_count + 1; args[i] != NULL; i++) {
+        char *str = NULL;
+
+        if(is_escape) str = str_replace_escape(args[i]);
+        else str = args[i];
+
         if(is_first) is_first = false;
         else printf(" ");
 
-        int ret = printf("%s", args[i]);
-
+        int ret = printf("%s", str);
         if(ret < 0) return ret;
+
+        if(is_escape) free(str);
     }
     if(!is_no_newline) printf("\n");
     
@@ -355,4 +361,112 @@ int exec_cd(app_t *app, char **args) {
     closedir(dir);
     if(strcmp(args[1], "-") != 0) free(new_path);
     return 0;
+}
+
+int exec_which(app_t *app, char **args) {
+    int32_t args_count = 0;
+    int32_t arg_len = 0;
+    int32_t start = 0;
+    int32_t ret = 0;
+    char **paths = NULL;
+    bool is_all = false;
+    bool is_physical = false;
+
+    for(; args[args_count] != NULL; args_count++);
+    if (args_count < 2) {
+        return 1;
+    }
+
+    arg_len = strlen(args[1]);
+
+    if(args[1][0] == '-' && arg_len == 2) {
+        switch (args[1][1]) {
+            case 'a': {
+                is_all = true;
+                break;
+            }
+            case 's': {
+                is_physical = true;
+                break;
+            }
+            default: {
+                mx_printerr("which: bad option: ");
+                mx_printerr(args[1]);
+                mx_printerr("\n");
+                return -1;
+            }
+        }
+        if(args_count > 2) start = 2;
+        else return 1;
+    }
+    else {
+        start = 1;
+    }
+
+    paths = mx_strsplit(getenv("PATH"), ':');
+    if(paths == NULL) return 1;
+
+    for (int32_t i = start; args[i] != NULL; i++) {
+        bool is_exist = false;
+        for (t_list *node = app->commands; node != NULL; node = node->next) {
+            command_t *command = (command_t *)node->data;
+            if(strcmp(args[i], command->name) == 0) {
+                is_exist = true;
+                printf("%s: shell built-in command\n", args[i]);
+                break;
+            }
+        }
+
+        if(is_exist && !is_all) continue;
+
+        for (int32_t k = 0; paths[k] != NULL; k++) {
+            DIR *dir = opendir(paths[k]);
+            if(dir == NULL) continue;
+
+            int32_t files_count = directory_files_count(paths[k], ENTRY_ALL);
+            if(files_count < 0) continue;
+
+            for (int n = 0; n < files_count; n++) {
+                char *filename = readdir(dir)->d_name;
+                if(strcmp(args[i], filename) == 0) {
+                    is_exist = true;
+                    if(is_physical) {
+                        int32_t new_size = strlen(paths[k]) + strlen(args[i]) + 1;
+                        char *full_path = mx_strnew(new_size);
+
+                        strcat(full_path, paths[k]);
+                        strcat(full_path, "/");
+                        strcat(full_path, args[i]);
+
+                        char *resolved_path = realpath(full_path, NULL);
+
+                        if(strcmp(full_path, resolved_path) == 0) {
+                            printf("%s\n", full_path);
+                        }
+                        else {
+                            printf("%s -> %s\n", full_path, resolved_path);
+                        }
+
+                        free(resolved_path);
+                        free(full_path);
+                    }
+                    else {
+                        printf("%s/%s\n", paths[k], args[i]);
+                    }
+                    break;
+                }
+            }
+            closedir(dir);
+
+            if(is_exist && !is_all) break;
+        }
+
+        if(!is_exist) {
+            printf("%s not found\n", args[i]);
+            ret = 1;
+        }
+    }
+    
+    mx_del_strarr(&paths);
+    return ret;
 }

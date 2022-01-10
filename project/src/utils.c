@@ -290,3 +290,90 @@ char *normalize_path(const char * src) {
     res[res_len] = '\0';
     return res;
 }
+
+char *str_replace_escape(char *str) {
+    uint32_t size = strlen(str);
+    uint32_t new_size = 0;
+    uint32_t escape_count = 0;
+
+    char *new_str = NULL;
+
+    if(size < 2) return strdup(str);
+
+    for (uint32_t i = 0; i < size - 1; i++) {
+        if(str[i] == '\\' && (str[i + 1] == '\\' || str[i + 1] == 'a' || str[i + 1] == 'n' || str[i + 1] == 't' || str[i + 1] == 'v')) {
+            escape_count++;
+        }
+    }
+
+    new_size = size - escape_count;
+    new_str = (char *) malloc((size + 1) * sizeof(char));
+    if(new_str == NULL) return NULL;
+    memset(new_str, 0, (size + 1) * sizeof(char));
+
+    for (uint32_t i = 0, j = 0; i < new_size; i++, j++) {
+        if(str[j] == '\\' && (str[j + 1] == '\\' || str[j + 1] == 'a' || str[j + 1] == 'n' || str[j + 1] == 't' || str[j + 1] == 'v')) {
+            switch (str[j + 1]) {
+                case '\\': {
+                    new_str[i] = '\\';
+                    break;
+                }
+                case 'a': {
+                    new_str[i] = '\a';
+                    break;
+                }
+                case 'n': {
+                    new_str[i] = '\n';
+                    break;
+                }
+                case 't': {
+                    new_str[i] = '\t';
+                    break;
+                }
+                case 'v': {
+                    new_str[i] = '\v';
+                    break;
+                }
+                default:
+                    break;
+            }
+            j++;
+        }
+        else new_str[i] = str[j];
+    }
+
+    return new_str;
+}
+
+int directory_files_count(char *dir_path, entry_t entry) {
+    DIR *dir = opendir(dir_path);
+    int ret = 0;
+
+    if(dir == NULL) {
+        return -1;
+    }
+
+    for(struct dirent *file = readdir(dir); file != NULL; file = readdir(dir)) {
+        switch (entry) {
+            case ENTRY_DEFAULT: {
+                if(file->d_name[0] != '.') ret++;
+                break;
+            }
+            case ENTRY_HIDDEN: {
+                if(mx_strcmp(file->d_name, ".") && mx_strcmp(file->d_name, "..")) ret++;
+                break;
+            }
+            case ENTRY_ALL: {
+                ret++;
+                break;
+            }
+            default: {
+                ret++;
+                break;
+            }
+        }
+    }
+
+    closedir(dir);
+    return ret;
+}

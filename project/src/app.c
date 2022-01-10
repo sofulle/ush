@@ -21,6 +21,7 @@ app_t *app_init() {
     setenv("SHLVL", mx_itoa(shlvl), true);
 
     command_add(app, "exit", exec_exit);
+    command_add(app, "bye", exec_exit);
     command_add(app, "echo", exec_echo);
     command_add(app, "export", exec_export);
     command_add(app, "unset", exec_unset);
@@ -28,6 +29,7 @@ app_t *app_init() {
     command_add(app, "fg", exec_fg);
     command_add(app, "pwd", exec_pwd);
     command_add(app, "cd", exec_cd);
+    command_add(app, "which", exec_which);
 
     return app;
 }

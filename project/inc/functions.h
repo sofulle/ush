@@ -38,6 +38,7 @@ int exec_fg(app_t *app, char **args);
 int exec_unset(app_t *app, char **args);
 int exec_pwd(app_t *app, char **args);
 int exec_cd(app_t *app, char **args);
+int exec_which(app_t *app, char **args);
 
 // utils
 void prompt_print(app_t *app);
@@ -49,5 +50,7 @@ char *strtrim_quotes(char *str);
 int get_char_count(char *str, char c);
 bool is_valid_str(char *str);
 char *normalize_path(const char * src);
+char *str_replace_escape(char *str);
+int directory_files_count(char *dir_path, entry_t entry);
 
 #endif // !USH_FUNCTIONS_H

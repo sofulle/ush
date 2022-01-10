@@ -1,3 +1,2 @@
-Illegal option -s
-Usage: /usr/bin/which [-a] args
-512
+echo: shell built-in command
+0
